@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>INDEX</title>
+</head>
+<body>
+    <table>
+        <thead><th>Список правил</th></thead>
+        {% for rules in rules %}
+        <tr>
+            <td>{{ rules.rules }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

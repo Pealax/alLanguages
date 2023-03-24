@@ -11,3 +11,6 @@ class Language(models.Model):
 
     def __str__(self):
         return self.title
+
+class Rules(models.Model):
+    rules = models.CharField(max_length=200)
