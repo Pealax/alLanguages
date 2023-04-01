@@ -1,8 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from rest_framework.generics import ListAPIView
-from language.models import Language, Rules
-
+from language.models import Language, Rules, Answer
 from language.serializers import LanguageSerializer
 
 
@@ -12,7 +11,8 @@ class LanguageListView(ListAPIView):
 
 def index(request):
     ruleslist = Rules.objects.all()
-    return render(request, 'index.html', {"rules":ruleslist})
+    answers = Answer.objects.all()
+    return render(request, 'index.html', {"rlist":ruleslist, "answ":answers })
 
 def create(request):
     if request.method == "GET":
@@ -21,4 +21,9 @@ def create(request):
         rules = Rules()
         rules.rules = request.POST.get("newrule")
         rules.save()
+        Answer.objects.bulk_create([
+            Answer(ans=request.POST.get("ans1"), nr_id=rules.id),
+            Answer(ans=request.POST.get("ans2"), nr_id=rules.id),
+            Answer(ans=request.POST.get("ans3"), nr_id=rules.id),
+            ])
         return HttpResponseRedirect("/api/language/index")

@@ -5,11 +5,22 @@
     <title>INDEX</title>
 </head>
 <body>
+    <a href="/api/language/create/">Добавление правила</a>
+    <p></p>
     <table>
         <thead><th>Список правил</th></thead>
-        {% for rules in rules %}
+        {% for r in rlist %}
         <tr>
-            <td>{{ rules.rules }}</td>
+            <td>Правило</td>
+            <td>{{ r.rules }}</td>
+            <tr></tr>
+            <td>Ответы</td>
+            <td></td>
+            {% for a in answ %}
+                    {% if a.nr_id == r.id %}
+                        <td>{{ a.ans }}</td>
+                    {% endif %}
+            {% endfor %}
         </tr>
         {% endfor %}
     </table>

@@ -10,7 +10,12 @@
         {% csrf_token %}
         <label>Введите правило</label><br>
         <p> <input name="newrule" /></p>
+        <label>Введите ответы</label><br>
+        <p> <input name="ans1" /></p>
+        <p> <input name="ans2" /></p>
+        <p> <input name="ans3" /></p>
         <button type="submit">Сохранить</button>
     </form>
+    <a href="/api/language/index/">Все правила</a>
 </body>
 </html>
