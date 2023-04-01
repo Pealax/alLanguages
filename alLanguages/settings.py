@@ -83,23 +83,10 @@ WSGI_APPLICATION = 'alLanguages.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-
     'default': {
-
-        'ENGINE': os.getenv('POSTGRES_ENGINE') or 'django.db.backends.postgresql_psycopg2',  # 'django.db.backends.postgresql_psycopg2',
-
-        'NAME': os.getenv('POSTGRES_DATABASE') or 'languages',
-
-        'USER': os.getenv('POSTGRES_USER') or 'denis',
-
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD') or '8311',
-
-        'HOST': os.getenv('POSTGRES_HOST') or '127.0.0.1',
-
-        'PORT': os.getenv('POSTGRES_PORT') or '5432'
-
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-
 }
 
 

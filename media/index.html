@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>INDEX</title>
+</head>
+<body>
+    <a href="/api/language/create/">Добавление правила</a>
+    <p></p>
+    <table>
+        <thead><th>Список правил</th></thead>
+        {% for r in rlist %}
+        <tr>
+            <td>Правило</td>
+            <td>{{ r.rules }}</td>
+            <tr></tr>
+            <td>Ответы</td>
+            <td></td>
+            {% for a in answ %}
+                    {% if a.nr_id == r.id %}
+                        <td>{{ a.ans }}</td>
+                    {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

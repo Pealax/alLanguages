@@ -11,3 +11,10 @@ class Language(models.Model):
 
     def __str__(self):
         return self.title
+
+class Rules(models.Model):
+    rules = models.CharField(max_length=200)
+
+class Answer(models.Model):
+    nr = models.ForeignKey(Rules, on_delete = models.CASCADE)
+    ans = models.CharField(max_length=50)
