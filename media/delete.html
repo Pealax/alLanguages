@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:;base64,=">
+    <title>LANGUAGE RULES</title>
+</head>
+<body>
+    <a href="/api/rules/index/">Все правила</a>
+    <h3>Изменение правила</h3>
+    <p>{{ user }}</p>
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            <label>Удаляемое правило</label><br>
+            <select name="rulesselect">
+            {% for r in rlist %}
+                <option value ="{{r.rules}}">{{r.rules}}</option>
+            {% endfor %}
+            </select>
+        </p>
+        <button type="submit">Удалить</button>
+    </form>
+</body>
+</html>

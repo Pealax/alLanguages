@@ -2,27 +2,38 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <link rel="icon" href="data:;base64,=">
     <title>INDEX</title>
 </head>
 <body>
-    <a href="/api/language/create/">Добавление правила</a>
-    <p></p>
+    <a href="/api/rules/create/">Добавление правила</a>
+    <a href="/api/rules/correct/">Корректировка правила</a>
+    <a href="/api/rules/delete/">Удаление правила</a>
+    <a href="/api/rules/check/">Проверка правила</a>
+    <th><br>---</th>
+    <p>{{ user }}</p>
     <table>
         <thead><th>Список правил</th></thead>
         {% for r in rlist %}
         <tr>
-            <td>Правило</td>
-            <td>{{ r.rules }}</td>
+            <td><p>Правило</p> {{ r.rules }}</td>
+            <td><p>Создал</p> {{ r.userr }}</td>
+            <td><p>Статус</p> {{ r.status }}</td>
             <tr></tr>
             <td>Ответы</td>
-            <td></td>
-            {% for a in answ %}
-                    {% if a.nr_id == r.id %}
-                        <td>{{ a.ans }}</td>
-                    {% endif %}
+            {% for a in r.answer_set.all %}
+                <td>{{ a.ans }}</td>
             {% endfor %}
+            <tr></tr>
+            <td>Верификация</td>
+            {% for v in r.verif_set.all %}
+                <td>{{ v.userv }}</td>
+                <td>{{ v.flag }}</td>
+            {% endfor %}
+            <thead><th>---</th></thead>
         </tr>
         {% endfor %}
     </table>
+    <a href="/api-auth/login/">LOGIN</a>
 </body>
 </html>

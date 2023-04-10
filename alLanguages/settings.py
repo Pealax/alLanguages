@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'my_user',
     'language',
+    'rules',
     'word',
 ]
 
