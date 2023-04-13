@@ -1,8 +1,9 @@
+from random import choice
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.shortcuts import render
-from rest_framework.generics import ListAPIView
 from django.db.models import Avg, Min, Max, Sum
+from rest_framework.generics import ListAPIView
 from .models import Rules, Answer, Verif
 from .serializers import RulesSerializer
 
@@ -11,82 +12,95 @@ class RulesListView(ListAPIView):
     serializer_class = RulesSerializer
 
 def index(request):
-    ruleslist = Rules.objects.all()
+    user = request.user
+    ruleslist = Rules.objects.filter(
+        langnativ_id = user.native_id,
+        langlearn_id = user.learn_id)
     return render(request, 'index.html', {"rlist":ruleslist })
 
 def check(request):
-    ruluser = request.user
-    ruleslist = Rules.objects.exclude(userr=ruluser)
-    ruleslist = ruleslist.filter(status=0)
+    user = request.user
+    ruleslist = Rules.objects.filter(
+        langnativ_id = user.native_id,
+        langlearn_id = user.learn_id)
+    ruleslist = ruleslist.filter(status=0).exclude(userr = user)
+    rlist = ruleslist.values_list("id", flat=True)
+    rvlist = Verif.objects.filter(userv = user).values_list("rules_id", flat=True)
+    list = rlist.difference(rvlist)
+    if len(list) == 0:
+        return HttpResponse("Нет правил для проверки")
     if request.method == "GET":
-        return render(request, 'check.html', {"rlist":ruleslist })
+        rulsel = ruleslist.get(id=choice(list))
+        return render(request, 'check.html', {"rsel":rulsel })
     if request.method == "POST":
+        rulsel = ruleslist.get(id=request.POST.get("rsid"))
         verify = Verif()
         verify.flag = request.POST.get("flag")
         verify.comment = request.POST.get("comment")
-        sel = request.POST.get("rulesselect")
-        rulsel = Rules.objects.get(rules=sel)
         verify.rules = rulsel
-        verify.userv = ruluser
+        verify.userv = user
         verify.save()
         vr = rulsel.verif_set.all()
         sum = vr.aggregate(Sum("flag"))['flag__sum']
-        count = vr.count()
-        if sum >=3 :
+        count = len(vr)
+        if 2*sum - count >=3 :
             rulsel.status = 1
             rulsel.save()
         if count - sum >=3 :
             rulsel.status = 2
             rulsel.save()
-    return HttpResponseRedirect("/api/rules/index")
+        return HttpResponseRedirect("/api/rules/index")
 
 def create(request):
+    user = request.user
     if request.method == "GET":
         return render(request, 'create.html')
     if request.method == "POST":
         rules = Rules()
         rules.rules = request.POST.get("newrule")
-        rules.userr = request.user
+        rules.userr_id = user.id
+        rules.langnativ_id = user.native_id
+        rules.langlearn_id = user.learn_id
         rules.save()
-        Answer.objects.bulk_create([
-            Answer(ans=request.POST.get("ans1"), nr_id=rules.id),
-            Answer(ans=request.POST.get("ans2"), nr_id=rules.id),
-            Answer(ans=request.POST.get("ans3"), nr_id=rules.id),
-            ])
-    return HttpResponseRedirect("/api/rules/index")
+        ans=request.POST.get("ans")
+        answnew = ans.split(";")
+        for i in range(0,len(answnew)) :
+            answer = Answer()
+            answer.ans = answnew[i]
+            answer.nr_id = rules.id
+            answer.save()
+        return HttpResponseRedirect("/api/rules/index")
 
 def correct(request):
     ruluser = request.user
-    ruleslist = Rules.objects.filter(userr=ruluser)
-    ruleslist = ruleslist.filter(status=2)
+    ruleslist = Rules.objects.filter(status=2, userr=ruluser)
+    if len(ruleslist) == 0:
+        return HttpResponse("Нет правил для коррекции")
+    rulsel = choice(ruleslist)
+    answ = rulsel.answer_set.all()
     if request.method == "GET":
-        return render(request, 'correct.html', {"rlist":ruleslist })
+        return render(request, 'correct.html', {"rlist":ruleslist, "rsel":rulsel })
     if request.method == "POST":
-        sel = request.POST.get("rulesselect")
-        upd = request.POST.get("rule")
-        answupd =[request.POST.get("ans1"),
-            request.POST.get("ans2"),
-            request.POST.get("ans3")]
-        rul = Rules.objects.get(rules=sel)
-        answ = rul.answer_set.all()
-        rul.rules = upd
-        rul.status = 0
-        rul.save()
+        rulsel.rules = request.POST.get("rule")
+        rulsel.status = 0
+        rulsel.save()
+        rulsel.verif_set.all().delete()
+        ans=request.POST.get("ans")
+        answupd = ans.split(";")
         k=0
         for a in answ:
             a.ans = answupd[k]
             k+=1
-        answ.bulk_update(answ, ['ans'])
-    return HttpResponseRedirect("/api/rules/index")
+            answ.bulk_update(answ, ['ans'])
+        return HttpResponseRedirect("/api/rules/index")
 
 def delete(request):
     ruluser = request.user
-    ruleslist = Rules.objects.filter(userr=ruluser)
-    ruleslist = ruleslist.exclude(status=1)
+    ruleslist = Rules.objects.exclude(status=1).filter(userr=ruluser)
     if request.method == "GET":
         return render(request, 'delete.html', {"rlist":ruleslist })
     if request.method == "POST":
         sel = request.POST.get("rulesselect")
         rul = Rules.objects.get(rules=sel)
         rul.delete()
-    return HttpResponseRedirect("/api/rules/index")
+        return HttpResponseRedirect("/api/rules/index")

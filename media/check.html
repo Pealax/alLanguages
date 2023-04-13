@@ -12,18 +12,24 @@
     <form method="POST">
         {% csrf_token %}
         <p>
-            <label>Проверяемое правило</label><br>
-            <select name="rulesselect">
-            {% for r in rlist %}
-                <option value ="{{r.rules}}">{{r.rules}}</option>
+            <button value="Refresh Page" onClick="location.reload(); return false">другое правило</button>
+            <p></p>
+            <p>Проверяемое правило: {{ rsel.rules }}</p>
+            <p>Ответы:
+            {% for a in rsel.answer_set.all %}
+            <td>{{ a.ans }}</td>
             {% endfor %}
-            </select>
+            </p>
         </p>
+        <input name="rsid" value={{ rsel.id }} />
+        <p></p>
         <label>Комментарий</label>
         <input name="comment" />
         <p></p>
-        <button type="submit" name="flag" value=1>Подтвердить</button>
-        <button type="submit" name="flag" value=0>Отвергнуть</button>
+        <input type="radio" name="flag" value=1>Подтвердить
+        <input type="radio" name="flag" value=0>Отвергнуть
+        <p></p>
+        <button type="submit">Отправить</button>
     </form>
 </body>
 </html>

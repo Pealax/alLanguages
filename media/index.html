@@ -12,13 +12,20 @@
     <a href="/api/rules/check/">Проверка правила</a>
     <th><br>---</th>
     <p>{{ user }}</p>
+    <p>родной язык: {{ user.native }}</p>
+    <p>изучаемый язык: {{ user.learn }}</p>
     <table>
         <thead><th>Список правил</th></thead>
         {% for r in rlist %}
         <tr>
+            <td><p>ID</p> {{ r.id }}</td>
             <td><p>Правило</p> {{ r.rules }}</td>
             <td><p>Создал</p> {{ r.userr }}</td>
             <td><p>Статус</p> {{ r.status }}</td>
+            <tr></tr>
+            <td>Язык</td>
+            <td>{{ r.langnativ }}</td>
+            <td>{{ r.langlearn }}</td>
             <tr></tr>
             <td>Ответы</td>
             {% for a in r.answer_set.all %}
@@ -30,6 +37,7 @@
                 <td>{{ v.userv }}</td>
                 <td>{{ v.flag }}</td>
             {% endfor %}
+            <tr></tr>
             <thead><th>---</th></thead>
         </tr>
         {% endfor %}

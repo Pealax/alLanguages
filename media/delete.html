@@ -9,6 +9,8 @@
     <a href="/api/rules/index/">Все правила</a>
     <h3>Изменение правила</h3>
     <p>{{ user }}</p>
+    <p>родной язык: {{ user.native }}</p>
+    <p>изучаемый язык: {{ user.learn }}</p>
     <form method="POST">
         {% csrf_token %}
         <p>

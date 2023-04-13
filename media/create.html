@@ -9,14 +9,14 @@
     <a href="/api/rules/index/">Все правила</a>
     <h3>Добавление правил</h3>
     <p>{{ user }}</p>
+    <p>родной язык: {{ user.native }}</p>
+    <p>изучаемый язык: {{ user.learn }}</p>
     <form method="POST">
         {% csrf_token %}
         <label>Введите правило</label><br>
         <p> <input name="newrule" /></p>
-        <label>Введите ответы</label><br>
-        <p> <input name="ans1" /></p>
-        <p> <input name="ans2" /></p>
-        <p> <input name="ans3" /></p>
+        <label>Введите ответы<br>разделитель ";"</label><br>
+        <p> <input name="ans" /></p>
         <button type="submit">Сохранить</button>
     </form>
 </body>

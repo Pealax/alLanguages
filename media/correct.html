@@ -9,22 +9,29 @@
     <a href="/api/rules/index/">Все правила</a>
     <h3>Корректировка правила</h3>
     <p>{{ user }}</p>
+    <p>родной язык: {{ user.native }}</p>
+    <p>изучаемый язык: {{ user.learn }}</p>
     <form method="POST">
         {% csrf_token %}
         <p>
-            <label>Выберите правило</label><br>
-            <select name="rulesselect">
             {% for r in rlist %}
-                <option value ="{{r.rules}}">{{r.rules}}</option>
+            <p>Все правила для коррекции:
+            <tr>{{ r.rules }}</tr>
             {% endfor %}
-            </select>
+            </p> 
         </p>
+        <label>Корректируемое правило</label><br>
+        <tr>{{ rsel.rules }}</tr>
+        <p></p>
         <label>Исправленное правило</label><br>
         <p> <input name="rule" /></p>
+        <tr>Ответы</tr>
+        {% for a in rsel.answer_set.all %}
+        <td>{{ a.ans }}</td>
+        {% endfor %}
+        <p></p>
         <label>Исправленные ответы</label><br>
-        <p> <input name="ans1" /></p>
-        <p> <input name="ans2" /></p>
-        <p> <input name="ans3" /></p>
+        <p> <input name="ans" /></p>
         <button type="submit">Сохранить</button>
     </form>
 </body>
