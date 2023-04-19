@@ -5,7 +5,7 @@ class VerifSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(required=False)
     class Meta:
         model = Verif
-        fields = ['flag','comment','rules','date']
+        fields = ['id','flag','comment','rules','date']
     def create(self, validated_data):
         instance = Verif.objects.create(**validated_data)
         return instance

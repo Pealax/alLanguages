@@ -8,7 +8,7 @@ from .serializers import *
 class RulesListView(ListAPIView):
     queryset = Rules.objects.all()
     serializer_class = RulesSerializer
-#+
+
 class UserRulesListView(ListCreateAPIView):
     serializer_class = RulesAnswerSerializer
     def get_queryset(self):
@@ -17,19 +17,19 @@ class UserRulesListView(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save()
         userid = self.kwargs.get('user_id')
-        rules = Rules.objects.get(rules = serializer.data.get('rules')) 
+        rules = Rules.objects.get(id = serializer.data.get('id'))
         rules.userr_id = userid
         rules.langnativ_id = User.objects.get(id = userid).native_id
         rules.langlearn_id = User.objects.get(id = userid).learn_id
         rules.save()
-#+
+
 class UserRulesCorrectListView(ListAPIView):
     serializer_class = RulesAnswerSerializer
     def get_queryset(self):
         userid = self.kwargs.get('user_id')
         ruleslist = Rules.objects.filter(status=2, userr_id = userid)
         return ruleslist
-#+
+
 class UserRulesCorrect(RetrieveUpdateAPIView):
     serializer_class = RulesAnswerSerializer
     def get_queryset(self):
@@ -39,14 +39,14 @@ class UserRulesCorrect(RetrieveUpdateAPIView):
         spis = ruleslist.values_list("id", flat=True)
         if rulid in spis:
             return Rules.objects.filter(id = rulid)
-#+
+
 class UserRulesDeleteListView(ListAPIView):
     serializer_class = RulesAnswerSerializer
     def get_queryset(self):
         userid = self.kwargs.get('user_id')
         ruleslist = Rules.objects.filter(userr_id = userid).exclude(status=1)
         return ruleslist
-#+
+
 class UserRulesDelete(RetrieveDestroyAPIView):
     serializer_class = RulesAnswerSerializer
     def get_queryset(self):
@@ -56,7 +56,7 @@ class UserRulesDelete(RetrieveDestroyAPIView):
         spis = ruleslist.values_list("id", flat=True)
         if rulid in spis:
             return Rules.objects.filter(id = rulid)
-#+
+
 class UserRulesVerifiesList(ListAPIView):
     serializer_class = RulesVerifySerializer
     def spis(self):
@@ -75,7 +75,11 @@ class UserRulesVerifiesList(ListAPIView):
         return ruleslist
     
 class UserRulesCheck(ListCreateAPIView):
-    serializer_class = VerifSerializer
+    def get_serializer_class(self):
+        print(self.request.method)
+        if self.request.method == 'GET':
+            return RulesVerifySerializer
+        return VerifSerializer
     def rulsel(self):
         userid = self.kwargs.get('user_id')
         ruleslist = Rules.objects.filter(status=0).exclude(userr_id = userid)
@@ -89,12 +93,13 @@ class UserRulesCheck(ListCreateAPIView):
         return rulsel
     def get_queryset(self):
         rs = self.rulsel()
-        return Verif.objects.filter(rules_id = rs)
+        querry = Rules.objects.filter(id = rs)
+        return querry
     def perform_create(self, serializer):
         serializer.save()
         rid = serializer.data.get('rules')
         userid = self.kwargs.get('user_id')
-        verifnow = Verif.objects.get(date = serializer.data.get('date'))
+        verifnow = Verif.objects.get(id = serializer.data.get('id'))
         verifnow.userv_id = userid
         verifnow.save()
         rs = Rules.objects.get(id = rid)

@@ -3,7 +3,7 @@ from my_user.models import User
 from language.models import Language
 
 class Rules(models.Model):
-    rules = models.CharField(max_length=200, unique=True)
+    rules = models.CharField(max_length=200)
     status = models.PositiveSmallIntegerField(default=0)
     userr = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     langnativ = models.ForeignKey(Language, related_name='langnative', on_delete=models.DO_NOTHING)
