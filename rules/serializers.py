@@ -43,6 +43,7 @@ class RulesAnswerSerializer(serializers.ModelSerializer):
             answ.ans = answupd[k].get('ans')
             k+=1
         answers.bulk_update(answers, ['ans'])
+        Verif.objects.filter(rules = instance).delete()
         return instance
 
 class RulesVerifySerializer(serializers.ModelSerializer):
