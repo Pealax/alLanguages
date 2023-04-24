@@ -61,4 +61,4 @@ class UserManager(BaseUserManager):
         user.staff = True
         user.active = True
         user.save(using=self._db)
-        return user''
+        return user'''
