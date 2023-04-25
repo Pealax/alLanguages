@@ -22,7 +22,7 @@ class RulesSerializer(serializers.ModelSerializer):
     answers = serializers.StringRelatedField(many=True, required=False)
 
     class Meta:
-        model = Rules
+        model = Rule
         fields = ['id', 'rule', 'status','answers']
 
 class RulesAnswerSerializer(serializers.ModelSerializer):
@@ -30,12 +30,12 @@ class RulesAnswerSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True)
 
     class Meta:
-        model = Rules
+        model = Rule
         fields = ['id', 'rule', 'status', 'answers']
 
     def create(self, validated_data):
         answers = validated_data.pop('answers')
-        instance = Rules.objects.create(**validated_data)
+        instance = Rule.objects.create(**validated_data)
         for answer in answers:
             Answer.objects.create(rule=instance, **answer)
         return instance
@@ -60,5 +60,5 @@ class RulesVerifySerializer(serializers.ModelSerializer):
     verif_set = VerifSerializer(many=True)
 
     class Meta:
-        model = Rules
+        model = Rule
         fields = ['id', 'rule', 'answers', 'verif_set']
