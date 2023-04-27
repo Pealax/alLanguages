@@ -36,8 +36,8 @@ class RulesAnswerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         answers = validated_data.pop('answers')
         instance = Rule.objects.create(**validated_data)
-        for answer in answers:
-            Answer.objects.create(rule=instance, **answer)
+        answer_objs = [Answer(rule=instance, **answer) for answer in answers]
+        Answer.objects.bulk_create(answer_objs)
         return instance
 
     def update(self, instance, validated_data):
@@ -46,10 +46,8 @@ class RulesAnswerSerializer(serializers.ModelSerializer):
         instance.save()
         answupd = validated_data.get('answers')
         answers = Answer.objects.filter(rule=instance)
-        k=0
-        for answer in answers:
-            answer.answer = answupd[k].get('answer')
-            k+=1
+        for i, answer in enumerate(answers):
+            answer.answer = answupd[i].get('answer')
         answers.bulk_update(answers, ['answer'])
         Verif.objects.filter(rule=instance).delete()
         return instance
