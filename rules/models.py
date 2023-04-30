@@ -25,11 +25,12 @@ class Question(models.Model):
 class Answer(models.Model):
 
     answer = models.CharField(max_length=50)
+    correct = models.BooleanField(default=False)
     question = models.ForeignKey(Question, related_name='answers',
                              on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.answer
+        return self.answer + ', ' + str(self.correct)
 
 
 class Check(models.Model):
