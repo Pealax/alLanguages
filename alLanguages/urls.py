@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/language/', include('language.urls')),
     path('api/word/', include('word.urls')),
     path('api/rules/', include('rules.urls')),
+    path('api/challenge/', include('challenge.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

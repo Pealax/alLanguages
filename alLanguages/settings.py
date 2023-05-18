@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'language',
     'rules',
     'word',
+    'challenge',
 ]
 
 MIDDLEWARE = [
