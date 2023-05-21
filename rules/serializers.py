@@ -11,7 +11,8 @@ class CheckSerializer(serializers.ModelSerializer):
         fields = ['id', 'flag', 'comment', 'question']
 
     def create(self, validated_data):
-        instance = Check.objects.create(**validated_data)
+        user_id = self.context.get('request').user.id
+        instance = Check.objects.create(**validated_data, user_id=user_id)
         question_id = instance.question_id
         checks_question = Check.objects.filter(question_id=question_id)
         count = checks_question.count()
@@ -58,7 +59,7 @@ class QuestionAnswersSerializer(serializers.ModelSerializer):
         fields = ['id', 'question', 'status', 'answers']
 
     def create(self, validated_data):
-        user = validated_data['user']
+        user = self.context.get('request').user
         answers = validated_data.pop('answers')
         instance = Question.objects.create(**validated_data,
                     user_id=user.id,

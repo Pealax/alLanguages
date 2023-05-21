@@ -1,18 +1,26 @@
 from rest_framework import viewsets
-from rest_framework.generics import ListAPIView, ListCreateAPIView
-from word.models import Word
-from rules.models import Question
+from rest_framework.generics import ListAPIView
 from .models import *
 from .serializers import *
 
 class UserChallengeSet(viewsets.ModelViewSet):
 
-    serializer_class = ChallengeSerializer
+    http_method_names = ['get', 'post', 'put', 'head']
+
+    def get_serializer_class(self):
+        if self.request.method == 'PUT':
+            return ChallengeUpdateSerializer
+        return ChallengeSerializer
 
     def get_queryset(self):
         user_id = self.request.user.id
-        queryset = Challenge.objects.filter(user_id=user_id, state='Active')
-        return queryset
+        return Challenge.objects.filter(user_id=user_id, state='Active')
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+
+class UserChallengeHistory(ListAPIView):
+
+    serializer_class = ChallengeHistorySerializer
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        return Challenge.objects.filter(user_id=user_id).exclude(state='Active')

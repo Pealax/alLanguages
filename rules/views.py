@@ -29,9 +29,6 @@ class UserQuestionsSet(viewsets.ModelViewSet):
             queryset = queryset.exclude(status='AP')
         return queryset
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
 
 class UserQuestionsCheck(ListCreateAPIView):
 
@@ -46,6 +43,3 @@ class UserQuestionsCheck(ListCreateAPIView):
                 native_id=user.native_id,
                 learn_id=user.learn_id).exclude(user=user).exclude(check__user=user)
         return questionslist.order_by('?')[:1]
-
-    def perform_create(self, serializer):
-        serializer.save(user_id=self.request.user.id)
