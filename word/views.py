@@ -15,6 +15,8 @@ class Translates (APIView):
     queryset = WordTranslate.objects.all()
     serializer = TranslateSerializer
 
+    #def get_queryset
+
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         serializer = self.serializer(self.queryset.filter(language_id=pk), many=True)

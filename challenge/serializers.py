@@ -10,7 +10,7 @@ class ChallengeHistorySerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Challenge
-        fields = '__all__'
+        exclude = ['user', 'limit', 'remainder','is_active']
 
 class ChallengeSerializer(serializers.ModelSerializer):
 
@@ -19,7 +19,7 @@ class ChallengeSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Challenge
-        fields = ['id', 'state', 'temperature', 'bet', 'start', 'update', 'duration', 'end']
+        exclude = ['user','remainder']
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -36,7 +36,7 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = Challenge
-        fields = ['id', 'state', 'temperature', 'start', 'update', 'bonus']
+        fields = ['id', 'state', 'temperature', 'update', 'remainder', 'bonus']
 
     def update(self, instance, validated_data):
         heat = validated_data.get('temperature', 0)
@@ -47,21 +47,25 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
         duration = instance.duration
         time_now = datetime.now(tz=timezone.utc)
         days_last_upd = (time_now - start).days - (update - start).days
-        time_to_end = start + timedelta(days=duration) - time_now        
+        time_to_end = start + timedelta(days=duration) - time_now
         temperature = self.calc_temperature(temperature, heat, days_last_upd)
         instance.state = self.set_state(temperature, time_to_end)
         if instance.state == 'Complete':
             instance.bonus = float(bet) * self.calc_bonus(temperature, duration) * self.calc_regress(bet)
         elif instance.state == 'Fail':
             instance.bonus = -bet
+        if days_last_upd > 0:
+            instance.remainder = instance.limit
+        instance.remainder -= 1
         instance.temperature = temperature
+        instance.is_active = True
         instance.save()
         return instance
 
     @staticmethod
     def calc_temperature(temperature, heat, days):
         scale = 50
-        cool = 3
+        cool = 3 # можно установить зависимость от 'limit' - кол-ва заданий в день 
         return temperature + heat/(1+temperature/scale) - days*cool
 
     @staticmethod
@@ -69,7 +73,7 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
         frozen = 0
         if temperature >= frozen:
             if time.total_seconds() > 0:
-                return 'Active'
+                return 'Proceed'
             else:
                 return 'Complete'
         else:

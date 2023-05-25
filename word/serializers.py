@@ -12,9 +12,9 @@ class TranslateSerializer(serializers.ModelSerializer):
 class QuerySerializer(serializers.ModelSerializer):
     translates = TranslateSerializer(source='translate_set', many=True)
 
-    def get_translates(self, instance):
-        print('HERE!!!!!!!!!!!!!!!!!!')
-        return {instance.id: 123}
+#    def get_translates(self, instance):
+#        print('HERE!!!!!!!!!!!!!!!!!!')
+#        return {instance.id: 123}
 
     class Meta:
         model = Word
