@@ -64,7 +64,7 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def calc_temperature(temperature, heat, days):
-        scale = 50
+        scale = 100
         cool = 3 # можно установить зависимость от 'limit' - кол-ва заданий в день 
         return temperature + heat/(1+temperature/scale) - days*cool
 
@@ -81,7 +81,7 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def calc_bonus(temperature, duration):
-        return 1.001**float(duration) * 1.003**float(temperature) - 1
+        return 1.001**float(duration) * 1.001**float(temperature) - 1
 
     @staticmethod
     def calc_regress(bet):

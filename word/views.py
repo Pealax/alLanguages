@@ -1,5 +1,5 @@
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
-from rest_framework.utils.json import loads, dumps
+from rest_framework.utils.json import loads, dumps # вероятно, не нужны
 from rest_framework.views import APIView
 
 from word.models import Word, WordTranslate, Progress
@@ -14,8 +14,6 @@ from rest_framework.viewsets import ModelViewSet
 class Translates (APIView):
     queryset = WordTranslate.objects.all()
     serializer = TranslateSerializer
-
-    #def get_queryset
 
     def get(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -37,23 +35,32 @@ class WordViewSet(ModelViewSet):
     serializer = WordSerializer
 
     def list(self, request, *args):
-        queries = self.word_ids(None)
+        #queries = self.word_ids(None)
+        queries = self.queryset.filter(id__in=self.word_ids(None), active=True) # c queryset лучше работать здесь
         serializer = self.serializer(queries, context={'request': request}, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None, *args):
-        query = self.queryset.get(pk=pk)
-        query.words = self.word_ids(query)
-        serializer = self.serializer(query, context={'request': request})
+        #query = self.queryset.get(pk=pk)
+        #query.words = self.word_ids(query)
+        #serializer = self.serializer(query, context={'request': request})
+        query = self.queryset.filter(id__in=self.word_ids(pk), active=True)
+        serializer = self.serializer(query, context={'request': request}, many=True)
         return Response(serializer.data)
 
-    def word_ids(self, query):
+    def word_ids(self, category):
         language_ids = [self.request.user.learn_id, self.request.user.native_id]
-        word_ids = WordTranslate.objects.filter(language_id__in=language_ids, word__word=query)\
-            .values_list('word_id', flat=True)
-        ids = [id_ for id_ in word_ids if list(word_ids).count(id_) > 1]
-
-        return self.queryset.filter(id__in=list(set(ids)), active=True)
+        #word_ids = WordTranslate.objects.filter(language_id__in=language_ids, word__word=query)\
+        #    .values_list('word_id', flat=True)
+        #ids = [id_ for id_ in word_ids if list(word_ids).count(id_) > 1]
+        #return self.queryset.filter(id__in=list(set(ids)), active=True)
+        ids1 = WordTranslate.objects.filter(language_id=language_ids[0],
+                    word__word=category).values_list('word_id', flat=True)
+        ids2 = WordTranslate.objects.filter(language_id=language_ids[1],
+                    word__word=category).values_list('word_id', flat=True)
+        word_ids = set(ids1)
+        word_ids.intersection_update(ids2)
+        return list(word_ids) # получили число, вернули набор чисел 
 
     def create(self, request, *args):
         data = request.data
@@ -89,10 +96,7 @@ class WordViewSet(ModelViewSet):
                 progress = Progress.objects.get(translate_id=translate.id)
                 progress.round += 1
                 progress.save()
-
         return Response()
-
-
 
 
 '''def update(self, request, pk=None):
@@ -150,7 +154,8 @@ class ProgressUpdateView(APIView):
 @api_view(['PATCH'])
 def update_progress(request):
     print('Y')
-    data = request.data
+    #data = request.data
+    data = request.data['id'] # С фронта {'id':[list]}
     word_ids = [word_id for word_id in data]
     progress = Progress.objects.filter(user_id=request.user.id).filter(translate_id__in=word_ids).order_by('round')
     print(1)
