@@ -42,4 +42,4 @@ class UserQuestionsCheck(ListCreateAPIView):
         questionslist = Question.objects.filter(status='PR',
                 native_id=user.native_id,
                 learn_id=user.learn_id).exclude(user=user).exclude(check__user=user)
-        return questionslist.order_by('?')[:1]
+        return questionslist.order_by('?')[0]

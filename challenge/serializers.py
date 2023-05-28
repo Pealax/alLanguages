@@ -56,7 +56,8 @@ class ChallengeUpdateSerializer(serializers.ModelSerializer):
             instance.bonus = -bet
         if days_last_upd > 0:
             instance.remainder = instance.limit
-        instance.remainder -= 1
+        if heat != 0:
+            instance.remainder -= 1
         instance.temperature = temperature
         instance.is_active = True
         instance.save()
