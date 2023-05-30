@@ -1,25 +1,153 @@
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
-from rest_framework.utils.json import loads, dumps # вероятно, не нужны
-from rest_framework.views import APIView
+from django.db.models import F
 
-from word.models import Word, WordTranslate, Progress
-from word.serializers import WordSerializer, QuerySerializer, TranslateSerializer
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.db.models import F
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
+
+from word.models import *
+from word.serializers import *
 
 
-class Translates (APIView):
-    queryset = WordTranslate.objects.all()
-    serializer = TranslateSerializer
+class ProgressList (ListAPIView):
 
-    def get(self, request, *args, **kwargs):
-        language = self.kwargs['pk']
-        serializer = self.serializer(self.queryset.filter(language_id=language), many=True)
+    serializer_class = ProgressSerializer
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        return Progress.objects.filter(user_id=user_id)
+
+class TranslatesList (RetrieveAPIView):
+
+    serializer_class = TranslateSerializer
+
+    def get_queryset(self):
+        return WordTranslate.objects.all()
+
+
+class WordViewSet(ModelViewSet):
+    queryset = Word.objects.all()
+    serializer = WordSerializer
+
+    def list(self, request, *args):
+        lang_ids = [self.request.user.learn_id, self.request.user.native_id]
+        queries = self.queryset.filter(id__in=word_ids(lang_ids, None), active=True)
+        #Это выдает список всех категорий (word_id=NULL). на двух языках. 
+        #Юзер выбирает категорию=pk и его перекидывает на word/pk т.е. на retrieve
+        serializer = self.serializer(queries, context={'request': request}, many=True)
         return Response(serializer.data)
 
+    def retrieve(self, request, pk=None, *args):
+        user = self.request.user
+        lang_ids = [user.learn_id, user.native_id]
+        translate_obj = WordTranslate.objects.filter(word_id__in=word_ids(lang_ids, pk),
+                                                     language_id=lang_ids[0])
+        #Cписок Translate, при этом КатегорияWord=pk. на языке learn. 
+        #.exclude(word__user=user_id) Убрать Word созданные самим Юзером?
+        word_and_progr = []
+        #Массив для (Progress.round и id_Word)
+        for translate in translate_obj:
+            if not translate.progress_set.filter(user_id=user.id):
+                word_and_progr.append((0, translate.word_id))
+                # Прогресса нет, ставим round=0
+            elif not translate.progress_set.filter(is_know=False):
+                pass
+                # Прогресс is_know, ничего не добавляем
+            else:
+                progress = translate.progress_set.latest('updated')
+                word_and_progr.append((progress.round, translate.word_id))
+                # Добавлем id_Word и соответствующий Progress.round
+        slice = sorted(word_and_progr)[:20] # 20 кортежей у которых round - min.
+        select = [slice[1] for slice in slice] # 20 Word_id
+        queries = self.queryset.filter(id__in=select).order_by('?')[:5]
+        # Из 20-ти Слов случайно выбираем 5 Слов для изучения.
+        serializer = self.serializer(queries, context={'request': request}, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args):
+        data = request.data
+        data['user'] = request.user.id
+        serializer = self.serializer(data=data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save() #Создание Word Юзером.
+            return Response(status=status.HTTP_201_CREATED)
+        else:
+            print(serializer.errors)
+            print(serializer.error_messages)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        user=self.request.user
+        word_ids = request.data['ids'] # С фронта {'id':[list]}
+        translate_ids = [translate.id 
+                        for translate 
+                        in WordTranslate.objects.filter(language=user.learn_id,
+                                                        word_id__in=word_ids)]
+        for translate_id in translate_ids:
+            progress, sign = Progress.objects.get_or_create(user_id=user.id,
+                                                      translate_id=translate_id)
+            # Взяли или создали Прогресс соответствующий word.id пришедших с Фронта
+            progress.round += 1
+            # добавили 1 round
+            if progress.round == 10:
+                progress.is_know = True
+            # Если раудов 10, Прогресс="знаю"
+            progress.save()
+        return Response()
+    
+
+    '''
+    def update(self, request, pk=None):
+        query_progress = Progress.objects.filter(user_id=request.user.id).filter(translate__word_id=pk)
+        word_ids = [word_id for word_id in request.data]
+        current_progress = query_progress.filter(translate_id__in=word_ids).order_by('round')
+
+        if len(current_progress):
+            updated_progress = current_progress.filter(round=current_progress[0].round).update(round=F('round') + 1)
+            low_progress = query_progress.exists(round=current_progress[0].round + 1)
+            if low_progress - updated_progress == 0:
+                translate = WordTranslate.objects.get(word_id=pk, language_id=request.user.learn_id)
+                progress = Progress.objects.get(translate_id=translate.id)
+                progress.round += 1
+                progress.save()
+        return Response()'''
+
+    '''
+    def partial_update(self, request, pk=None):
+        instance = self.queryset.get(pk=pk)
+        serializer = self.serializer(instance, data=request.data, context={'request': request}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)'''
+    
+#@staticmethod
+def word_ids(lang_ids, category): #Выбор Word Категории=category, у которых есть Translate на обоих языках
+    ids1 = WordTranslate.objects.filter(language_id=lang_ids[0], active=True,
+                word__word=category).values_list('word_id', flat=True)
+    ids2 = WordTranslate.objects.filter(language_id=lang_ids[1], active=True,
+                word__word=category).values_list('word_id', flat=True)
+    word_ids = set(ids1)
+    word_ids.intersection_update(ids2)
+    return list(word_ids)
+
+'''
+@api_view(['PATCH'])
+def update_progress(request):
+    print('Y')
+    data = request.data['id'] # С фронта {'id':[list]}
+    word_ids = [word_id for word_id in data]
+    progress = Progress.objects.filter(user_id=request.user.id).filter(translate_id__in=word_ids).order_by('round')
+    print(1)
+    user_progress = progress.filter(round=progress[0].round).update(round=F('round') + 1)
+    print('Y2')
+    print('user_progress', user_progress)
+    return Response() '''
+
+
+'''
 #class QueryList(ListAPIView):
 class QueryList(RetrieveAPIView):
     queryset = Word.objects.all()
@@ -38,79 +166,8 @@ class QueryList(RetrieveAPIView):
         n=2 # для тестирования
         query = query.order_by('?')[:n] # N слов случайной Категории заданного Уровня
         serializer = self.serializer(query, context={'request': request}, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data) '''
 
-
-class WordViewSet(ModelViewSet):
-    queryset = Word.objects.all()
-    serializer = WordSerializer
-
-    def list(self, request, *args):
-        queries = self.queryset.filter(id__in=word_ids(self, None), active=True)
-        serializer = self.serializer(queries, context={'request': request}, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, pk=None, *args):
-        query = self.queryset.filter(id__in=word_ids(self, pk), active=True)
-        serializer = self.serializer(query, context={'request': request}, many=True)
-        return Response(serializer.data)
-
-    def create(self, request, *args):
-        data = request.data
-        data['user'] = request.user.id
-        serializer = self.serializer(data=data, context={'request': request})
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(status=status.HTTP_201_CREATED)
-        else:
-            print(serializer.errors)
-            print(serializer.error_messages)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, pk=None):
-        instance = self.queryset.get(pk=pk)
-        serializer = self.serializer(instance, data=request.data, context={'request': request}, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def update(self, request, pk=None):
-        query_progress = Progress.objects.filter(user_id=request.user.id).filter(translate__word_id=pk)
-        word_ids = [word_id for word_id in request.data]
-        current_progress = query_progress.filter(translate_id__in=word_ids).order_by('round')
-
-        if len(current_progress):
-            updated_progress = current_progress.filter(round=current_progress[0].round).update(round=F('round') + 1)
-            low_progress = query_progress.exists(round=current_progress[0].round + 1)
-            if low_progress - updated_progress == 0:
-                translate = WordTranslate.objects.get(word_id=pk, language_id=request.user.learn_id)
-                progress = Progress.objects.get(translate_id=translate.id)
-                progress.round += 1
-                progress.save()
-        return Response()
-
-def word_ids(self, category): #Выбор Word у которых есть Translate на обоих языках
-    language_ids = [self.request.user.learn_id, self.request.user.native_id]
-    ids1 = WordTranslate.objects.filter(language_id=language_ids[0],
-                word__word=category).values_list('word_id', flat=True)
-    ids2 = WordTranslate.objects.filter(language_id=language_ids[1],
-                word__word=category).values_list('word_id', flat=True)
-    word_ids = set(ids1)
-    word_ids.intersection_update(ids2)
-    return list(word_ids)
-
-@api_view(['PATCH'])
-def update_progress(request):
-    print('Y')
-    data = request.data['id'] # С фронта {'id':[list]}
-    word_ids = [word_id for word_id in data]
-    progress = Progress.objects.filter(user_id=request.user.id).filter(translate_id__in=word_ids).order_by('round')
-    print(1)
-    user_progress = progress.filter(round=progress[0].round).update(round=F('round') + 1)
-    print('Y2')
-    print('user_progress', user_progress)
-    return Response()
 
 '''
 class QueryDetailView(RetrieveAPIView):

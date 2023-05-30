@@ -9,8 +9,14 @@ class TranslateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ProgressSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Progress
+        fields = '__all__'
+
+
 class QuerySerializer(serializers.ModelSerializer):
-    #translates = TranslateSerializer(source='translate_set', many=True)
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -25,17 +31,11 @@ class QuerySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ProgressSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Progress
-        fields = '__all__'
-
-
 class WordTranslateSerializer(serializers.ModelSerializer):
     word = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
     progress = ProgressSerializer(read_only=True)
 
+    '''
     def get_progress(self, obj):
         if 'request' in self.context:
             user = self.context['request'].user
@@ -43,6 +43,7 @@ class WordTranslateSerializer(serializers.ModelSerializer):
 
             return progress.round
         return
+    '''
 
     class Meta:
         model = WordTranslate
@@ -50,7 +51,6 @@ class WordTranslateSerializer(serializers.ModelSerializer):
 
 
 class WordSerializer(serializers.ModelSerializer):
-    #translates = WordTranslateSerializer(many=True, required=False)
 
     class Meta:
         model = Word
@@ -90,19 +90,20 @@ class WordSerializer(serializers.ModelSerializer):
             #response['translates'] = WordTranslate.objects.filter(word_id=instance.id)
         return response '''
 
+
+    def create(self, validated_data):
+        user_id = self.context['request'].user.id
+        instance = Word.objects.create(**validated_data, user_id=user_id)
+        return instance
+
+    '''
     def get_fields(self):
         fields = super(WordSerializer, self).get_fields()
         fields['words'] = WordSerializer(many=True, read_only=True)
-        return fields
+        return fields '''
 
-    def create(self, validated_data):
-        #value = validated_data.pop('data')['value']
-        instance = Word.objects.create(**validated_data)
-
-        return instance
-
-
-'''    def update(self, pk, request):
+    ''' 
+    def update(self, pk, request):
         progress = Progress.objects.filter(user_id=request.user.id).filter(word_id__in=request.data).order_by('level')
         user_progress = progress.filter(level=progress[0].level).update(level=F('level') + 1)
 
@@ -112,8 +113,7 @@ class WordSerializer(serializers.ModelSerializer):
         for field in validated_data:
             setattr(instance, field, validated_data.get(field, getattr(instance, field)))
         instance.save()
-        return instance
-'''
+        return instance '''
 
 
 '''
