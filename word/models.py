@@ -16,19 +16,26 @@ class BaseModel(models.Model):
 
 
 class Word(BaseModel):
-    word = models.ForeignKey('self', related_name='word_set', on_delete=models.SET_NULL, null=True, blank=True)
-    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    word = models.ForeignKey('self', related_name='word_set', 
+                             on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, 
+                             on_delete=models.SET_NULL, null=True, blank=True)
     level = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='word/image/', null=True)
     review = models.PositiveIntegerField(default=0)
 
 
 class WordTranslate(BaseModel):
-    word = models.ForeignKey(Word, related_name='translate_set', on_delete=models.CASCADE)
-    language = models.ForeignKey(Language, related_name='language_set', on_delete=models.CASCADE)
+    word = models.ForeignKey(Word, related_name='translate_set', 
+                             on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, related_name='language_set', 
+                                 on_delete=models.CASCADE)
     text = models.CharField(max_length=32)
     transcription = models.CharField(max_length=32, null=True)
     sound = models.FileField(upload_to='word/sound/', null=True)
+
+    def __str__(self):
+        return self.text
 
 
 class Progress(BaseModel):
@@ -39,4 +46,4 @@ class Progress(BaseModel):
     active = None
 
     def __str__(self):
-        return str(self.user) + ' ' + str(self.translate.text) + ' ' + str(self.round)
+        return 'Translate: ' + str(self.translate) + 'Round: ' + str(self.round)

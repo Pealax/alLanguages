@@ -11,43 +11,11 @@ class TranslateSerializer(serializers.ModelSerializer):
 
 class ProgressSerializer(serializers.ModelSerializer):
 
+    translate = TranslateSerializer()
+
     class Meta:
         model = Progress
-        fields = '__all__'
-
-
-class QuerySerializer(serializers.ModelSerializer):
-
-    def to_representation(self, instance):
-        response = super().to_representation(instance)
-        user = self.context['request'].user
-        objects = WordTranslate.objects.filter(word_id=instance.id, 
-                    language_id__in=[user.native.id, user.learn.id])
-        response['translates'] = [WordTranslateSerializer(object).data for object in objects]
-        return response
-
-    class Meta:
-        model = Word
-        fields = '__all__'
-
-
-class WordTranslateSerializer(serializers.ModelSerializer):
-    word = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
-    progress = ProgressSerializer(read_only=True)
-
-    '''
-    def get_progress(self, obj):
-        if 'request' in self.context:
-            user = self.context['request'].user
-            progress, _ = Progress.objects.get_or_create(user_id=user.id, translate_id=obj.id)
-
-            return progress.round
-        return
-    '''
-
-    class Meta:
-        model = WordTranslate
-        fields = '__all__'
+        fields = ['user', 'translate', 'round', 'is_know']
 
 
 class WordSerializer(serializers.ModelSerializer):
@@ -61,8 +29,9 @@ class WordSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         objects = WordTranslate.objects.filter(word_id=instance.id, 
                     language_id__in=[user.native.id, user.learn.id])
-        response['translates'] = [WordTranslateSerializer(object).data for object in objects]
+        response['translates'] = [TranslateSerializer(object).data for object in objects]
         return response
+
         '''
         if not user.learn_id and user.native_id:
             print('IF', user.learn_id, user.native_id)
@@ -90,19 +59,12 @@ class WordSerializer(serializers.ModelSerializer):
             #response['translates'] = WordTranslate.objects.filter(word_id=instance.id)
         return response '''
 
-
-    def create(self, validated_data):
-        user_id = self.context['request'].user.id
-        instance = Word.objects.create(**validated_data, user_id=user_id)
-        return instance
-
     '''
     def get_fields(self):
         fields = super(WordSerializer, self).get_fields()
         fields['words'] = WordSerializer(many=True, read_only=True)
-        return fields '''
+        return fields
 
-    ''' 
     def update(self, pk, request):
         progress = Progress.objects.filter(user_id=request.user.id).filter(word_id__in=request.data).order_by('level')
         user_progress = progress.filter(level=progress[0].level).update(level=F('level') + 1)
@@ -113,8 +75,42 @@ class WordSerializer(serializers.ModelSerializer):
         for field in validated_data:
             setattr(instance, field, validated_data.get(field, getattr(instance, field)))
         instance.save()
-        return instance '''
+        return instance 
+    '''
 
+'''
+class WordTranslateSerializer(serializers.ModelSerializer):
+    word = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
+    progress = ProgressSerializer(read_only=True)
+
+    def get_progress(self, obj):
+        if 'request' in self.context:
+            user = self.context['request'].user
+            progress, _ = Progress.objects.get_or_create(user_id=user.id, translate_id=obj.id)
+
+            return progress.round
+        return
+
+    class Meta:
+        model = WordTranslate
+        fields = '__all__'
+'''
+
+'''
+class QuerySerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        user = self.context['request'].user
+        objects = WordTranslate.objects.filter(word_id=instance.id, 
+                    language_id__in=[user.native.id, user.learn.id])
+        response['translates'] = [WordTranslateSerializer(object).data for object in objects]
+        return response
+
+    class Meta:
+        model = Word
+        fields = '__all__'
+'''
 
 '''
 class QueryTranslateSerializer(serializers.ModelSerializer):
@@ -123,9 +119,7 @@ class QueryTranslateSerializer(serializers.ModelSerializer):
     class Meta:
         model = QueryTranslate
         fields = '__all__'
-'''
-
-'''def get_native(self, instance):
+    def get_native(self, instance):
         user = self.context['request'].user
         translate = WordTranslate.objects.get(word_id=instance.id, language_id=user.native.id)
         return translate.text
@@ -163,9 +157,10 @@ class QueryCreateSerializer(serializers.ModelSerializer):
         instance = Query.objects.create(**validated_data)
         return instance
 '''
+
 '''
     conditions = ConditionSerializer(many=True, required=False)
-    # wins = NumberSerializer(many=True, read_only=True)
+    wins = NumberSerializer(many=True, read_only=True)
         def create(self, validated_data):
         conditions_data = validated_data.pop('conditions', [])
         lot = Lot.objects.create(**validated_data)
@@ -176,7 +171,3 @@ class QueryCreateSerializer(serializers.ModelSerializer):
             )
         return 
 '''
-
-
-
-

@@ -5,10 +5,8 @@ from word.views import *
 router = DefaultRouter()
 router.register(r'', WordViewSet, basename='words')
 
-
 urlpatterns = [
     path('progress/', ProgressList.as_view(), name='progress-list'),
-    path('translates/<pk>/', TranslatesList.as_view(), name='translates-list'),
-    #path('query/<pk>/', QueryList.as_view(), name='queries'),
+    path('translates/', TranslatesList.as_view(), name='translates-list'),
     path('', include(router.urls))
 ]
