@@ -3,15 +3,24 @@ from alLanguages.settings import AUTH_USER_MODEL
 from language.models import Language
 
 
+class Category(models.Model):
+    category = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.category
+
+
 class Question(models.Model):
 
     question = models.CharField(max_length=200)
+    category = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
+    # При удалении Категории, наверно, не надо удалять все Вопросы ?
     status_choices = (
-        ('PR', 'Processing'),
-        ('AP', 'Accepted'),
-        ('RJ', 'Rejected'),
+        ('Proceed', 'proceed'),
+        ('Complete', 'complete'),
+        ('Reject', 'reject'),
     )
-    status = models.CharField(max_length=2, choices=status_choices, default='PR')
+    status = models.CharField(max_length=8, choices=status_choices, default='Proceed')
     user = models.ForeignKey(AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     native = models.ForeignKey(Language, related_name='lang_native',
                               on_delete=models.DO_NOTHING)

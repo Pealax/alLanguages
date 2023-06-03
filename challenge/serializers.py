@@ -12,6 +12,7 @@ class ChallengeHistorySerializer(serializers.ModelSerializer):
         model = Challenge
         exclude = ['user', 'limit', 'remainder','is_active']
 
+
 class ChallengeSerializer(serializers.ModelSerializer):
 
     end = serializers.DateTimeField(required=False)
@@ -30,6 +31,7 @@ class ChallengeSerializer(serializers.ModelSerializer):
         user_id = self.context.get('request').user.id
         instance = Challenge.objects.create(**validated_data, user_id=user_id)
         return instance
+
 
 class ChallengeUpdateSerializer(serializers.ModelSerializer):
 

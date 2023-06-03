@@ -17,7 +17,7 @@ class UserChallengeSet(viewsets.ModelViewSet):
         user_id = self.request.user.id
         return Challenge.objects.filter(user_id=user_id, state='Proceed', remainder__gt=0)
 
-    def partial_update(self, *args, **kwargs):
+    def partial_update(self, *args, **kwargs): # 'patch' makes Challenge inactive  
         instance = self.get_queryset().get(id=kwargs.get('pk'))
         serializer = ChallengeSerializer(instance, data={'is_active': False}, partial=True)
         serializer.is_valid(raise_exception=True)

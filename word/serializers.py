@@ -25,11 +25,13 @@ class WordSerializer(serializers.ModelSerializer):
         exclude = ['review']
 
     def to_representation(self, instance):
+        # Add Translate's to the response.
         response = super().to_representation(instance)
         user = self.context['request'].user
-        objects = WordTranslate.objects.filter(word_id=instance.id, 
-                    language_id__in=[user.native.id, user.learn.id])
-        response['translates'] = [TranslateSerializer(object).data for object in objects]
+        objs = WordTranslate.objects.filter(word_id=instance.id, 
+                language_id__in=[user.native.id, user.learn.id]
+                )
+        response['translates'] = TranslateSerializer(objs, many=True).data
         return response
 
     '''

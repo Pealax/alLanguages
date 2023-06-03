@@ -18,9 +18,9 @@ class CheckSerializer(serializers.ModelSerializer):
         count = checks_question.count()
         sum = checks_question.aggregate(Sum('flag'))['flag__sum']
         if count - sum >= 3:
-            self.set_status(question_id, 'RJ')
+            self.set_status(question_id, 'Reject')
         elif 2*sum - count >= 3:
-            self.set_status(question_id, 'AP')
+            self.set_status(question_id, 'Complete')
         return instance
     
     @staticmethod
@@ -71,7 +71,7 @@ class QuestionAnswersSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.question = validated_data.get('question')
-        instance.status = 'PR'
+        instance.status = 'Proceed'
         instance.save()
         Check.objects.filter(question=instance).delete()
         Answer.objects.filter(question=instance).delete()
@@ -91,3 +91,30 @@ class QuestionCheckSerializer(serializers.ModelSerializer):
 
         model = Question
         fields = ['id', 'question', 'answers', 'check_set']
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Category
+        fields = '__all__'
+
+
+class CategoryQuestionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = Category
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        # Add Question's to the response.
+        response = super().to_representation(instance)
+        user = self.context['request'].user
+        objs = Question.objects.filter(status='Complete',
+                    native_id=user.native_id,
+                    learn_id=user.learn_id
+                    ).exclude(user_id=user.id)
+        response['questions'] = QuestionSerializer(objs, many=True).data
+        return response
