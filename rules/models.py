@@ -4,10 +4,21 @@ from language.models import Language
 
 
 class Category(models.Model):
+
     category = models.CharField(max_length=50)
 
     def __str__(self):
         return self.category
+
+
+class CategoryTranslate(models.Model):
+
+    text = models.CharField(max_length=50)
+    native = models.ForeignKey(Language, on_delete=models.CASCADE, null=False)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
+
+    def __str__(self):
+        return self.text
 
 
 class Question(models.Model):

@@ -8,5 +8,5 @@ router.register(r'', WordViewSet, basename='words')
 urlpatterns = [
     path('progress/', ProgressList.as_view(), name='progress-list'),
     path('translates/', TranslatesList.as_view(), name='translates-list'),
-    path('', include(router.urls))
+    path('category/', include(router.urls))
 ]
